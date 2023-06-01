@@ -1,0 +1,23 @@
+{
+    "program": "idspAPI",
+    "release": "2",
+    "version": "2.2.1",
+    "timestamp": "2023-06-01 09:19:32.006", 
+    "code": 200,
+    "description": "OK",
+    "response": {
+        "name": "John Doe",
+        "mail": "john.doe@pncbank.com",
+        "position": "Data Scientist",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzYW5qaXQuZ3JvdmVyIiwibWVtYmVyT2YiOlsiTEgtQWRtaW4wMSIsIkxILVN1cGVyLUFkbWluIiwiTEgtQ09OVEVYVC1QRSIsIkxILUNPTlRFWFQtUEVRQSIsIkxILUNPTlRFWFQtUEVERU1PIiwiTEgtQ09OVEVYVC1XTSIsIkxILUNPTlRFWFQtUkVHTiIsIkxILUNPTlRFWFQtQksiLCJMSC1DT05URVhULUxTIiwiTEgtQ09OVEVYVC1QRVIiLCJMSC1DT05URVhULURETC1URVNUIiwiTEgtQ09OVEVYVC1MSC1ERVYiLCJMSC1DT05URVhULUxILVFBIiwiTEgtQ09OVEVYVC1MSC1QUk9EIl0sImV4cCI6MTY4NTYyNTU3MiwiaWF0IjoxNjg1NjExMTcyfQ.wrmu8dTEYdN07dlEC9zd_QwPrjVZ6l84oGtxuqNrGuY",
+        "memberOf": [
+            "LH-Admin01",
+            "LH-Super-Admin"
+        ],
+        "userProfile": {
+            "userId": "john.doe",
+            "theme": "{\"theme\":\"Dark\",\"ISSOIDomainBased\":0,\"NavigationType\":\"Sidebar\"}"
+        },
+        "roleSelection": "Y"
+    }
+}

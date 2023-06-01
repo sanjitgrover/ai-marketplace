@@ -1,0 +1,121 @@
+{
+    "data":[
+    {
+      "insightsId": "Speciality-CARD",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "PUDs contribute to 76% of NBRx volume in M12",
+      "createdBy": "Sumit Asthana",
+      "email": "admin@incedoinc.com",
+      "entity": "Speciality",
+      "name": "CARD",
+      "createdDate": 1674740000000,
+      "rating": 4
+    },
+    {
+      "insightsId": "Speciality-CARD-HCP",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "PUDs contribute to 76% of NBRx volume in M12",
+      "createdBy": "Sumit Asthana",
+      "email": "admin@incedoinc.com",
+      "entity": "HCP",
+      "name": "CARD",
+      "createdDate": 1674580000000,
+      "rating": 3
+    },
+    {
+      "insightsId": "Speciality-CARD-Segment",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "PUDs contribute to 76% of NBRx volume in M12",
+      "createdBy": "Yatin Bhatia",
+      "email": "admin@incedoinc.com",
+      "entity": "Segment",
+      "name": "CARD",
+      "createdDate": 1674590000000,
+      "rating": 1
+    },
+    {
+      "insightsId": "Speciality-Others",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "HCPs 101888247, 103238541 and 102321341 have biggest NBRx drop from M11 to M12",
+      "createdBy": "Yatin Bhatia",
+      "email": "admin@incedoinc.com",
+      "entity": "Speciality",
+      "name": "Others",
+      "createdDate": 1674630000000,
+      "rating": 2
+    },
+    {
+      "insightsId": "Speciality-Others-HCP",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "HCPs 101888247, 103238541 and 102321341 have biggest NBRx drop from M11 to M12",
+      "createdBy": "Soumiran Banerjee",
+      "email": "admin@incedoinc.com",
+      "entity": "HCP",
+      "name": "Others",
+      "createdDate": 1674720000000,
+      "rating": 1
+    },
+    {
+      "insightsId": "Speciality-Others-Segment",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "HCPs 101888247, 103238541 and 102321341 have biggest NBRx drop from M11 to M12",
+      "createdBy": "Sumit Asthana",
+      "email": "admin@incedoinc.com",
+      "entity": "Segment",
+      "name": "Others",
+      "createdDate": 1674560000000,
+      "rating": 5
+    },
+    {
+      "insightsId": "Speciality-PUD",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "Segment A contributes to 42% of NBRx drop between M11 and M12",
+      "createdBy": "Soumiran Banerjee",
+      "email": "admin@incedoinc.com",
+      "entity": "Speciality",
+      "name": "PUD",
+      "createdDate": 1674750000000,
+      "rating": 3
+    },
+    {
+      "insightsId": "Speciality-PUD-HCP",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "Segment A contributes to 42% of NBRx drop between M11 and M12",
+      "createdBy": "Sumit Asthana",
+      "email": "admin@incedoinc.com",
+      "entity": "HCP",
+      "name": "PUD",
+      "createdDate": 1674770000000,
+      "rating": 2
+    },
+    {
+      "insightsId": "Speciality-PUD-Segment",
+      "nodeId": "nodeb4f2ca73212a3815bcc2531c4544da",
+      "kpiTreeId": 57,
+      "filter": "{\"Timeframe\":\"M12\"}",
+      "insightsValue": "Segment A contributes to 42% of NBRx drop between M11 and M12",
+      "createdBy": "Ashish Gupta",
+      "email": "admin@incedoinc.com",
+      "entity": "Segment",
+      "name": "PUD",
+      "createdDate": 1674560000000,
+      "rating": 4
+    }
+  ]
+}

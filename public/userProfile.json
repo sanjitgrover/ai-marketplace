@@ -1,0 +1,9 @@
+{
+    "program": "idspAPI",
+    "release": "2",
+    "version": "2.2.1",
+    "timestamp": "2023-06-01 09:19:32.59",
+    "code": 200,
+    "description": "OK",
+    "response": "{\"theme\":\"Dark\",\"ISSOIDomainBased\":0,\"NavigationType\":\"Headerbar\"}"
+}

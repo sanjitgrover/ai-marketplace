@@ -1,0 +1,52 @@
+{
+  "50": [
+    {
+      "key": "",
+      "val": "Select Internal Page"
+    },
+    {
+      "key": "Models/ModelDescription",
+      "val": "DataScience-ModelDescription"
+    },
+    {
+      "key": "Models/ModelSummary",
+      "val": "DataScience-ModelSummary"
+    },
+    {
+      "key": "Models/FeatureImportance",
+      "val": "DataScience-FeatureImportance"
+    },
+    {
+      "key": "Models/ModelStats",
+      "val": "DataScience-ModelStats"
+    },
+    {
+      "key": "Models/ModelLeaderboard",
+      "val": "DataScience-ModelLeaderboard"
+    },
+    {
+      "key": "Models/ModelReviews",
+      "val": "DataScience-Model Reviews"
+    },
+    {
+      "key": "Models/ModelPerformance",
+      "val": "DataScience-Model Performance"
+    },
+    {
+      "key": "Models/ModelAdd",
+      "val": "DataScience-Add Model"
+    },
+    {
+      "key": "Models/ModelTryout",
+      "val": "DataScience-TryItOut"
+    },
+    {
+      "key": "Menu/AdminMenuConfigurations",
+      "val": "Menu Configuration"
+    },
+    {
+      "key": "Theme/ThemeSelection",
+      "val": "Theme Configuration"
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+{
+    "openapi": "3.0.2",
+      
+    
+    "paths": {
+       
+       
+        "/xgb_classifier/mrm190006": {
+            "post": {
+                "tags": [
+                    "MRM190006"
+                ],
+                "summary": "Custom Behavioral Scorecard - Consumer Card",
+                "description": "API to execute model for Custom Behavioral Scorecard - Consumer Card",
+                "operationId": "placeOrder",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Model"
+                            }
+                        },
+                        "application/xml": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Model"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Model"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Model"
+                                }
+                            }
+                        }
+                    },
+                    "405": {
+                        "description": "Invalid input"
+                    }
+                }
+            }
+        }
+       
+    },
+    "components": {
+        "schemas": {
+            "Model": {
+                "type": "object",
+                "properties": {
+                    "chd_orgn_acct": {
+                        "type": "string"
+                    },
+                    
+                    "reh7110": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 0
+                    },
+                    "minpayratio_floored_112m_min": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 0
+                    },
+                    "als5400": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "mob": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "d_total_bal_deposit_112m_min": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "bca8320": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "carrying_value_trend": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "last_stmnt_sales_amt": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "rta8320": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "minpayratio_112m": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "all7340": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "d_total_bal_deposit_trend": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "iqt9420": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+
+                    "d1_oldest_deposit_acc_open_dt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "all8152": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "utilization_trend": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "d1_rev_acc_wrst_pst_90d_cnt_112m_max": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "minpayratio_floored": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "lslatchg_16m": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "minpayratio_13m_max": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "minpayratio_13m_min": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "iln8222": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "past_due_amt": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "bcc5420": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    },
+                    "current_external_status": {
+                        "type": "string"
+                    },     
+                    
+                    "complete": {
+                        "type": "boolean"
+                    }
+                },
+                "xml": {
+                    "name": "model"
+                }
+            },
+           
+            "ApiResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "xml": {
+                    "name": "##default"
+                }
+            }
+        },
+        "requestBodies": {
+            "Pet": {
+                "description": "Pet object that needs to be added to the store",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Pet"
+                        }
+                    },
+                    "application/xml": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Pet"
+                        }
+                    }
+                }
+            },
+            "UserArray": {
+                "description": "List of user object",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+       
+    }
+}

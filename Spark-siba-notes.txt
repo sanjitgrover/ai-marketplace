@@ -1,0 +1,243 @@
+1.Submit Spark job to a cluster
+spark3-submit master --yarn basic.py
+
+2.### Let's Stop the Cluster
+--Create a file stop-all.sh
+stop-yarn.sh
+stop-dfs.sh
+jps
+
+### Start the Cluster. 
+--Create a file start-all.sh
+start-dfs.sh
+start-yarn.sh
+docker start postgress_container
+jps
+
+3.HDFS Block Size is 128mb
+Can be configured at hdfs-site.xml
+Block Size Small - Too many blocks~Too much metadata to handle
+Vlock Size Large - Processing Time increases
+
+4.Default Replication=3
+Can be configured at hdfs-site.xml
+Data Block is replicated to datanodes
+
+5.Rack Awareness
+Data Nodes are arranged in Racks.
+HDFS replicates blocks to various racks but make sure that all replications are not on the same rack.
+
+6.HDFS Read Mechanism - Refer Sibaram slides
+
+7.hdfs dfs -usage ls
+hdfs dfs -help ls
+
+8.sudo apt install unzip
+unzip SalesData.zip
+
+9.hdfs dfs -mkdir -p practice/retail_db
+hdfs dfs -put datafiles/* practice/retail_db/
+
+10.hdfs files and folders list
+hdfs dfs -ls -R practice/retail_db/
+
+11.Only paths no group/ownership info
+hdfs dfs -ls -C practice/retail_db
+
+12.To show list in descending alphabetical order
+hdfs dfs -ls -r practice/retail_db
+
+13.To show list in Size descending
+hdfs dfs -ls -S practice/retail_db
+
+14.To show list in Time descending
+hdfs dfs -ls -t practice/retail_db
+
+15.hdfs dfs -rmdir empty_dir
+Remove Directory if it is empty.
+--ignore-fail-on-non-empty : Suppress Error messages if the Folder you are trying to remove is non empty.
+
+16.Delete folders with all the files
+hdfs dfs -rm -r practice/retail_db
+use -rf to not show any error message
+use -skipTrash to avoid Recycle bin
+
+17.When writing shell command file, use echo $ to check if there was any error message after running the command. It will give a 1 or 0.
+
+18. use -p with mkdir to suppress error message if the folder is already there
+
+19.Copy data from HDFS to local
+hdfs dfs -get /practice/retail_db/orders .
+use -f to suppress error
+use -p to keep the timestamp preserved from the copied hdfs folder
+
+20.To display first 1KB of data
+hdfs dfs -head practice/retail_db/orders/part-00000
+
+21.To display last 1KB of data
+hdfs dfs -tail practice/retail_db/orders/part-00000
+use -f with tail to display streaming data
+
+22.To view entire file
+hdfs dfs -cat practice/retail_db/orders/part-00000
+
+23.To view specific KB of the file use pipe and head command with cat
+hdfs dfs -cat practice/retail_db/orders/part-00000 | head -10
+Similar for tail
+
+24.Print statistics - stat
+hdfs dfs -stat practice/retail_db/orders/part-00000
+--default - prints last modified time 
+-stat %y - 
+-stat %b - file size
+-stat %f - Type of object - file or folder
+-stat %o - Block size
+-stat %r - Replication
+-stat %u - User
+-stat %a - ownership no. 
+-stat %A - ownership -r-w-w-
+
+25.hdfs dfs -df =To get the entire Size, used, available and use% of the Filesystem
+use -h to display size in KB/MB
+
+26.hdfs dfs -du practice/retail_db
+Check the individual size of the folders
+use -u to show disk space consumed with all replicas
+use -s for summarized size of the top level folder
+use -h to display size in KB/MB
+
+27.hdfs dfs fsck practice/retail_db
+-default provides detailed summary report of block/memory usage/replication factor etc of the folder
+-use -files to provide file level info within the folder
+-use -blocks with -files to provide block level info also
+-use -locations with -blocks to provide location of each block
+-use -racks with -blocks
+
+28.File permissions
+Owner 	Group 	Others
+rwx	rwx	rwx
+
+In HDFS there is no concept of X-Executing a file because all files are datafiles
+
+29.Change permission - 1.Octal mode chmod XXX - 777 full
+		       2.Symbolic mode g(group)u(ser)o(ther)    - g+w   -->write permision to group
+
+30.Change/override hdfs properties
+1.change at hdfs-site.xml
+2.while copying - hdfs dfs -Ddfs.blocksize=64M -Ddfs.replication=3 -put sample1.txt practice/retail_db
+3.Create override file - hdfs-override.xml with property dfs.replication value as 5
+hdfs dfs --conf hdfs-override.xml -put sample1.txt practice/retail_db
+4.hdfs dfs setrep 2 practice/retail_db/sample1.txt
+ 
+31.s="test"
+Use dir(s) to print all functions available
+dir(__builtin__)
+
+32.num=10
+f'{num:.2f}'
+10.00
+
+33.SparkSession encompasses:
+SparkContext
+SQLContext 
+HiveContext
+StreamingContext
+SparkConf
+
+34.Structure of a spark project:
+mkdir -p devl/example1/src/main/python
+   <dev/prod><projname>
+
+Inside python folders:
+cd devl/example1/src/main/python
+mkdir bin   --> Hold python files to submit
+mkdir sql   ==> Hive/SQL files
+mkdir lib   --> connectors/lib
+mkdir secured--> Secure passwords for DBs
+
+35.To modes for submitting spark-submit jobs
+1.Cluster Mode - spark2-submit --deploy-mode cluster <path of the program to submit>
+For production mode as logs are not generated
+2.Client Mode - default mode, for development as logs are generated
+
+36.To get the logs in cluster mode, use 
+yarn logs -applicationId <application ID obtained from Spark UI>
+
+37.--conf spark.sql.shuffle.partitions=300
+
+38.Use combiner instead of shuffle wherever possible.
+
+39.To debug Performance issues:
+For RDD, use toDebugString, rdd.toDebugString()
+For DF, use explain()
+
+40.RDD operations:
+1.Map 2.Filter 3.Reduce
+JOins:
+1.join(inner join) 2.cogroup(left outer join) 3.cartesian(cross-group)
+Aggregations:
+1.groupByKey() (Avoid it; no combiner) 2.aggregateByKey()(uses combiner) 
+3.reduceByKey()(uses combiner) 4.countByKey() (use it no shuffle)
+
+41.aggregateByKey is different from reduceByKey is that it may/maynot return RDD as output
+****aggregateByKey - samajh nhi aaya
+
+42.sortByKey()
+
+43.Ranking - Global and Local
+Global Ranking using 
+1.SortByKey(False)
+2.RDD.takeOrdered
+
+Local Ranking using
+groupByKey().flatmap
+
+44.Union
+RDD1.union(RDD2)
+apply distinct() and count() over it. It will not remove duplicates
+
+45.intersection
+it removes duplicates 
+
+46.rdd2.subtract(rdd1).collect()
+
+47.sample(withReplacement=, fraction=, seed=) - To get sample values from the RDD
+
+48.takeSample(withReplacement=, num=, seed=)
+
+49.Repartition=Increase partitions
+
+50.Coalesce=Decrease partitions but if its key parameter - shuffle is True, it can also increase partitions
+
+51.rdd.getNumPartitions()
+
+52.RDD.glom().map(len).collect() --> to find the no. of records in each partition
+
+53.saveAsTextFile()
+
+54.RDD persistence - - persist() and cache()
+
+55.Section 13 RDD Persistence
+rdd.persist(StorageLevel.MEMORY_AND_DISK_2)
+rdd.persist(StorageLevel.MEMORY_AND_DISK_2).getStorageLevel()
+
+56.rdd.is_cached() to check if the RDD is persisted or not.
+
+57.rdd.unpersist()	
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

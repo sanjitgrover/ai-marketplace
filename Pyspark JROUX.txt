@@ -1,0 +1,17 @@
+
+Pickling is the process whereby a Python object hierarchy is converted into a byte stream, and 
+“unpickling” is the inverse operation, whereby a byte stream (from a binary file or bytes-like object) is converted back into an object hierarchy.
+
+1.RDD still reigns in terms of flexibility. The RDD especially shines in two use cases:
+- When you have an unordered collection of Python objects that can be pickled
+   (which is how Python calls object serialization; see http://mng.bz/M2X7)
+- When you have unordered key, value pairs, like in a Python dictionary 
+
+2.A commutative function is a function where the order in which the arguments are
+applied is not important. For example, add() is commutative, since a + b = b + a.
+Oh the flip side, subtract() is not: a - b != b - a.
+
+3.An associative function is a function where how the values are grouped is not important.
+add() is associative, since (a + b) + c = a + (b + c). subtract() is not:
+(a - b) - c != a - (b - c).
+add(), multiply(), min(), and max() are both associative and commutative.

@@ -1,0 +1,403 @@
+**NP -> needs practice
+**CD -> check documentation
+**BW -> best way
+
+1.Components of Spark's distributed execution
+-Spark Application
+-Spark Driver
+-SparkSession
+-Cluster Manager
+-Spark Executors
+
+SPARK DRIVER 
+-Communicates with Cluster manager to provide CPU, memory to Spark executors.
+-Converts spark application into one or more spark jobs
+-Convert spark job to DAG
+-The previous step is also called spark execution plan where each node within a DAG could be a single or multiple Spark stages
+-Each stage has spark tasks (unit of execution) distributed to Spark executors
+-Each task maps to a single core and works on a single partition of data
+-e.g.an executor with 16 cores can have 16 or more tasks working on 16 or more partitions in parallel, making the execution of Spark’s tasks exceedingly parallel
+-Talks directly to Spark executors once they get the resources.
+
+
+SPARK SESSION
+-Single Entry Point for all spark's functionality to be used by spark executors.
+-Engulfs these contexts - SQLCONTEXT, HIVECONTEXT, STREAMINGCONTEXT, SPARKCONF, SPARKCONTEXT
+
+CLUSTER MANAGER
+-Manages and allocates resources for the cluster of nodes on which spark application runs.
+-Spark have these cluster managers - Standalone, YARN, MESOS, KUBERNETES
+
+SPARK EXECUTOR
+-Communicates with DRIVER and executes task on the WORKER NODE.
+-Mostly, single EXECUTOR runs per WORKER NODE.
+
+DISTRIBUTED DATA AND PARTITIONS
+-Physical data is distributed as Partitions in Storage - HDFS or Cloud Storage like S3
+-Spark treats each partition as a high-level logical data abstraction — as a DataFrame in memory. 
+-Each Spark executor is preferably allocated a task that requires it to read the partition closest to it in the network,  observing data locality and minimizing Network Bandwidth.
+
+e.g.Breaks physical data over clusters into 8 partitions
+log_df=spark.read.text("path_of_large_text_file").repartition(8)
+
+e.g.create a DataFrame of 10,000 integers distributed over eight partitions in memory:
+df = spark.range(0, 10000, 1, 8)
+print(df.rdd.getNumPartitions())
+# 8
+
+SPARK OPERATIONS:
+-TRANSFORMATIONS-transform a Spark DataFrame into a new DataFrame without altering the original data .i.e immutable DF
+-ACTIONS-An action triggers the lazy evaluation of all the recorded transformations. all transformations T are recorded until the action A is invoked. Each transformation T produces a new DataFrame.
+
+LAZY EVALUATION - 
+
+Types of TRANSFORMATIONS
+-NARROW TRANSFORMATIONS - Any transformation where a single output partition can be computed from a single input partition is a narrow transformation. e.g. 	select(), filter(), contains(), withColumn(), withColumnRenamed(), drop()
+
+-WIDE TRANSFORMATIONS - Data from other partitions is required to be read, combined and written to disk also called SHUFFLE.
+e.g. distinct(), union() join, GROUPBY() or ORDERBY()
+
+SPARK UI - By default runs on port 4040 to view: http://<localhost>:4040 --->>**NP
+-A list of scheduler stages and tasks
+-A summary of RDD sizes and memory usage
+-Information about the environment
+-Information about the running executors
+-All the Spark SQL queries
+
+TWO WAYS TO DEFINE SCHEMA:
+1)Programmatically using StructType
+ from pyspark.sql.types import *
+  schema = StructType([StructField("author", StringType(), False),
+  StructField("title", StringType(), False),
+  StructField("pages", IntegerType(), False)])
+2)Directly using DDS
+ schema = "author STRING, title STRING, pages INT"
+==> if we only specify column names and dont specify types, spark infers datatypes automatically
+
+
+*bw Use collect() carefully -  
+The DataFrame API also offers the collect() method, but for extremely large DataFrames this is resource-heavy (expensive) and dangerous, as it can cause out-of-memory (OOM) exceptions. Unlike count(), which returns a single number to the driver, collect() returns a collection of all the Row objects in the entire DataFrame or Dataset. If you want to take a peek at some Row records you’re better off with take(n), which will return only the first n Row objects of the DataFrame.
+
+Also, similarly for countByKey, countByValue, collectAsMap
+
+SPARK ERROR CHECK
+ERROR TYPE		SQL		DATAFRAME
+Syntax Errors		Runtime		CompileTime
+Analysis Errors		Runtime		Runtime
+
+WHEN TO USE RDD
+1.If you are using a third-party package that’s written using RDDs
+2.Can forgo the code optimization, efficient space utilization, and performance benefits available with DataFrames and Datasets
+3.Want to precisely instruct Spark how to do a query
+
+*bw df.rdd function is used to convert DF to RDD
+
+COMPONENTS OF SPARK SQL ENGINE
+1.Catalyst optimizer 
+2.Project Tungsten
+
+WHAT IS A CATALYST OPTIMIZER
+The Catalyst optimizer takes a computational query and converts it into an execution plan. It goes through four transformational phases:
+1.Analysis
+2.Logical optimization
+3.Physical planning
+4.Code generation
+
+*bw To check the query execution plan, use:
+   count_mnm_df.explain(True)
+
+SPARK TABLE METADATA STORE
+1.Metadata about tables - the schema, description, table name, database name, column names, partitions, physical location where the actual data resides.
+2.Spark by default, stores metadata information in Hive metastore at  /user/hive/warehouse.
+3.This location can be changed to local or external distributed storage using conf - spark.sql.warehouse.dir
+4.MANAGED TABLES - Spark manages data and metadata. On Drop Table command complete data and metadata is deleted.
+5.Examples of managed tables - local filesystem, HDFS or S3. 
+6.UNMANAGED TABLES - Spark only manages the metadata, data is managed in an external data source such as Cassandra. On Drop Table command only metadata is deleted.
+
+SPARK VIEWS
+1.GLOBAL TEMP VIEWS - Visible over all the spark sessions in a cluster
+2.LOCAL TEMP VIEWS - Visible for the spark session it is created in.  
+
+- Temporary views dont contain data and they get dropped once the spark application terminates 
+
+SPARK CATALOGS - TO VIEW METADATA
+spark.catalog.listDatabases()
+spark.catalog.setCurrentDatabase('DEMO_DB')
+spark.catalog.currentDatabase()
+spark.catalog.listTables()
+spark.catalog.listColumns("us_delay_flights_tbl")
+
+CACHE/UNCACHE Tables and Views
+CACHE [LAZY] TABLE <table-name>
+UNCACHE TABLE <table-name>
+
+Here, [LAZY] is optional. i.e cache when used for the first time rather than immediately
+
+*bw SPARK - READ STRUCTURED DATA INTO DFs
+If you have data recieved in an external DB and table, rather than reading semi-structured CSV or JSON file, read the table and create a dataframe from it:
+us_flights_df = spark.sql("SELECT * FROM us_delay_flights_tbl")
+us_flights_df2 = spark.table("us_delay_flights_tbl")  
+  
+DATAFRAMEREADER
+Read data into a dataframe. It is a SparkSession function
+-Spark read and readStream command returns handle to DataframeReader
+-Sample: DataFrameReader.format(args).option("key", "value").schema(args).load()
+
+-format(args), args     ="parquet", "csv", "txt", "json", "jdbc", "orc", "avro", etc. Default is parquet.
+-option("key", "value") = ("mode", {PERMISSIVE | FAILFAST | DROPMALFORMED } )
+			  ("inferSchema", {true | false})
+                          ("path", "path_file_data_source"). Default is PERMISSIVE
+-schema() = DDL String e.g. 'A INT, B STRING' or StructType - StructType(...). CSV and JSON allow inferSchema
+No schema required to read Parquet files from static resources as Parquet metadata contains the schema.
+But schema is required to Parquet from streaming resources. 
+-load() = "/path/to/data/source", not required if option(path) is used.
+
+*bw If you dont know the type of data, Read data using spark.read.text to check seperator, header and data type initially.
+Also, used commandline head and tail to check the data 
+
+DATAFRAMEWRITER
+Saves or writes data to a specified built-in data source. It is a spark dataframe function
+-Spark write and writeStream command returns handle to DataframeWriter
+-Usage Patterns:
+1)DataFrameWriter.format(args)
+  .option(args)
+  .bucketBy(args)
+  .partitionBy(args)
+  .save(path)
+
+2)DataFrameWriter.format(args).option(args).sortBy(args).saveAsTable(table)
+ 
+-format(args), args     ="parquet", "csv", "txt", "json", "jdbc", "orc", "avro", etc.
+Default is Parquet or whatever is set in spark.sql.sources.default.
+-option() = ("mode", {append | overwrite | ignore | error or errorifexists} )
+	    ("mode", {SaveMode.Overwrite | SaveMode.Append, SaveMode.Ignore, SaveMode.ErrorIfExists})
+            ("path", "path_to_write_to")
+The default mode options are error or errorifexists and SaveMode.ErrorIfExists; they throw an exception at runtime if the data already exists.
+
+-bucketBy(args) = (numBuckets, col, col..., coln) - The number of buckets and names of columns to bucket by. Uses Hive’s bucketing scheme on a filesystem.
+-save() = "/path/to/data/source"
+The path to save to. This can be empty if specified in option("path", "...").
+-saveAsTable()	"table_name"
+
+PARQUET FILES
+Components of a parquet file directory structure:
+1.Data Files
+2.Metadata
+3.No. of compressed files
+4.Status files
+5.Metadata in the footer contains the version of the file format, the schema, and column data such as the path.
+
+df = spark.read.format("parquet").load(file)
+
+CREATE OR REPLACE TEMPORARY VIEW us_delay_flights_tbl
+    USING parquet
+    OPTIONS (
+      path "/databricks-datasets/learning-spark-v2/flights/summary-data/parquet/
+      2010-summary.parquet/" )
+
+
+
+
+UDF
+-Define a function - func
+-spark.udf.register("name-of-udf", func, return-type-of-func )
+-use udf on SQL Temp Views on a column - select name-of-udf(col) from temp view
+
+PANDAS UDFs
+def 
+-use udf on dataframe - df.select(name-of-udf(col)).show()
+
+
+Connect to Spark-sql at local via Tableau:
+Server: localhost
+
+Port: 10000 (default)
+
+Type: SparkThriftServer (default)
+
+Authentication: Username
+
+Username: Your login, e.g., user@learningspark.org
+
+Require SSL: Not checked
+
+
+Postgresql
+jdbcDF1 = (spark
+  .read
+  .format("jdbc") 
+  .option("url", "jdbc:postgresql://[DBSERVER]")
+  .option("dbtable", "[SCHEMA].[TABLENAME]")
+  .option("user", "[USERNAME]")
+  .option("password", "[PASSWORD]")
+  .load())
+
+
+SPARK CONFIGURATIONS
+Three ways + UI you can get and set Spark properties
+1.From $SPARK_HOME 
+-conf/spark-defaults.conf.template, conf/log4j.properties.template, conf/spark-env.sh.template
+-Changing the default values in these files and saving them without the .template suffix instructs Spark to use these new values.
+-Configuration changes in the conf/spark-defaults.conf file apply to the Spark cluster and all Spark applications submitted to the cluster.
+
+2.From CLI while submitting Job
+-spark-submit 
+--conf spark.sql.shuffle.partitions=5 
+--conf "spark.executor.memory=2g" 
+--class main.scala.chapter7.SparkConfig_7_1 jars/main-scala-chapter7_2.12-1.0.jar
+
+3.Using Spark UI Environment Tab
+
+4.From Sparkshell/SparkSession
+spark.sql("SET -v").select("key", "value").show(n=5, truncate=False)
+spark.conf.get("spark.sql.shuffle.partitions")
+spark.conf.set("spark.sql.shuffle.partitions", 5)
+spark.conf.get("spark.sql.shuffle.partitions")
+
+To change configurations programmatically, check if the configuration is modifiable:
+spark.conf.isModifiable("<config_name>")
+ 
+
+Order of Precedence
+	SparkSession in spark application
+		^
+		|
+	Spark-submit
+		^
+		|
+	Spark Defaults.Conf file
+
+SPARK CONFIGURATIONS FOR LARGE WORKLOADS
+To avoid job failures due to resource starvation or gradual performance degradation, these configurations are applied on three Spark components:
+-Driver
+-Executor
+-Shuffle service
+
+*Spark static allocation - With spark-submit job the configurations provided hardcode the limits which cannot be changed while job run. To allow changes later Spark Dynamic Allocation can be used.
+
+Spark Dynamic Allocation is helpful in:
+-Spark Streaming 
+-On-demand data analytics 
+-Multitenent environments
+to leave/acquire executors as per execution demand
+
+SPARK DYNAMIC ALLOCATION set programmatically:
+spark.dynamicAllocation.enabled true
+spark.dynamicAllocation.minExecutors 2
+spark.dynamicAllocation.schedulerBacklogTimeout 1m
+spark.dynamicAllocation.maxExecutors 20
+spark.dynamicAllocation.executorIdleTimeout 2min
+
+Brief summary of above settings - dynamic allocation enabled - yes, then minimum executors - 2, if scheduler back log timesout i.e. pending tasks not executing till 1 min, then increase the no. of executors upto 20. Otherwise executor sitting idle for 2 mins, kill this executor
+
+SIZE OF PARTITION
+The size of a partition in Spark is dictated by spark.sql.files.maxPartitionBytes
+
+spark.read.textFile("../README.md").repartition(16)
+
+*****Further Tuning topic to be written after understanding properly******
+
+What is the meaning of data serialization?
+Serialization is the process of converting a data object—a combination of code and data represented within a region of data storage—into a series of bytes that saves the state of the object in an easily transmittable form.
+
+Types of JOIN STRATEGIES:
+BROADCAST HASH JOIN
+SHUFFLE HASH JOIN
+SHUFFLE SORT-MERGE JOIN
+BROADCAST NESTED LOOP JOIN
+SHUFFLE AND REPLICATED NESTED LOOP JOIN or CARTESIAN PRODUCT JOIN
+
+How to check what kind of JOIN STRATEGY has been used on the DF:
+joinedDF.explain(mode) where mode = 'simple', 'extended', 'codegen', 'cost', and 'formatted'
+
+spark.sql.autoBroadcastJoinThreshold=10 --> Broadcast Hash Join or
+joinedDF = playersDF.join(broadcast(clubsDF), "key1 === key2")
+
+SHUFFLE SORT MERGE JOIN 
+spark.sql.autoBroadcastJoinThreshold=-1  --> Do shuffle Sort Merge join
+Best Practice for SHUFFLE SORT MERGE JOIN: Bucketing, Pre-sort and cache
+// Save as managed tables by bucketing them in Parquet format
+usersDF.orderBy(asc("uid")).write.format("parquet").bucketBy(8, "uid").mode(SaveMode.OverWrite).saveAsTable("UsersTbl")
+
+ordersDF.orderBy(asc("users_id")).write.format("parquet").bucketBy(8, "users_id").mode(SaveMode.OverWrite).saveAsTable("OrdersTbl")
+
+// Cache the tables
+spark.sql("CACHE TABLE UsersTbl")
+spark.sql("CACHE TABLE OrdersTbl")
+
+// Read them back in
+val usersBucketDF = spark.table("UsersTbl")
+val ordersBucketDF = spark.table("OrdersTbl")
+
+// Do the join and show the results
+val joinUsersOrdersBucketDF = ordersBucketDF
+    .join(usersBucketDF, $"users_id" === $"uid")
+
+joinUsersOrdersBucketDF.show(false)
+
+GET ALL THE SPARK CONFIGURATIONS:
+for prop in spark.sparkContext.getConf().getAll():
+    print(prop)
+('spark.app.startTime', '1655032495963')
+('spark.app.id', 'local-1655032497193')
+('spark.rdd.compress', 'True')
+('spark.driver.host', '172.25.234.158')
+('spark.driver.port', '32953')
+('spark.serializer.objectStreamReset', '100')
+('spark.master', 'local[*]')
+('spark.submit.pyFiles', '')
+('spark.executor.id', 'driver')
+('spark.submit.deployMode', 'client')
+('spark.sql.warehouse.dir', 'file:/root/projects/Learning%20Spark/spark-warehouse')
+('spark.ui.showConsoleProgress', 'true')
+('spark.app.name', 'ch-5')
+
+Get Individual configuration:
+spark.sparkContext.getConf().get("spark.executor.id")
+'driver'
+
+spark.driver.memory
+
+spark.executor.memory=4GB
+spark.memory.fraction=0.6 = Spark Memory available for Spark executors
+
+Reserved memory=300MB
+User memory=(1 - 0.6)*(4*1024MB - 300MB)=
+Spark memory = 0.6*(4*1024MB - 300MB)
+
+Spark memory is further divided into: 
+Execution = 1 - spark.memory.storageFraction
+Storage  = spark.memory.storageFraction=0.5
+
+
+AQE - ADAPTIVE QUERY EXECUTION
+spark.conf.set("spark.sql.adaptive.enabled", "true")
+
+DYNamically coalesced shuffle partition
+AQE sets - CustomShuffleReader operator 
+which checks 
+spark.sql.adaptive.advisoryPartitionSizeInBytes - default 64MB
+and coalesces partitions with less than this size
+
+spark.conf.set("spark.sql.adaptive.skewJoin.
+                skewedPartitionFactor", "1")
+spark.conf.set("spark.sql.adaptive.skewJoin.
+                skewedPartitionThresholdInBytes", "2mb")
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 

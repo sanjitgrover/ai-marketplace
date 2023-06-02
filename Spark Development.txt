@@ -1,0 +1,849 @@
+*AF - Aggregate Function
+*bw - Best Way
+
+*webassessor.com/zz/DATABRICKS/Python_v2.html
+https://spark.apache.org/docs/latest/configuration.html
+Add #application-properties to the above link
+
+spark.apache.org/docs/latest/api/python/index.html
+
+---Make note of all Spark conf and read options:
+-To allow eager printing:
+spark = (SparkSession.builder
+.config("spark.sql.repl.eagerEval.enabled", "True")
+.getOrCreate())
+
+-This property makes sure that more resources are not used for smaller datasets.
+ spark.conf.set("spark.sql.shuffle.partitions","2")
+
+-Configure metastore for Spark tables which can be set to a local or external distributed storage using this option: 
+ spark.sql.warehouse.dir
+ Spark by default uses the Apache Hive metastore, located at /user/hive/warehouse
+
+
+-Fail the read command immediately in case of an error
+spark.read.option("mode","failfast")
+
+-Take help on any command
+ dir(spark.<read>) or spark.read. + Tab
+help(spark.read) 
+
+-Check Data types of all columns
+ df.printSchema()
+ df.dtypes()
+
+
+*bw Select all functions to use from pyspark sql - e.g.F.col, F.lit
+    import pyspark.sql.functions as F
+
+*bw Select all data types
+    from pyspark.sql.types import *
+
+CREATE DATAFRAMES:
+spark.createDataFrame(<iterator>, schema)  ==> schema is optional
+1.Using list of tuples
+2.Using list of lists
+3.Converting list of tuples/lists to list of rows using: 
+rows=[Row(*element) for element in list]
+4.Converting list of dicts to list of rows using:
+rows=[Row(**element) for element in list]
+
+****MAP Type - Similar to Array, it gets created for a dict element which has further elements, e.g. address
+{
+'name':'Sonu',
+'Address':{'flat':'236', 'society':'TrisetTowers','city':'Gurgaon'} 
+}
+
+Address
+[flat->236, society->TrisetTowers, city -> Gurgaon]
+user_df.select("Address[flat]").show()
+
+****Struct Type - Similar to Array, it gets created for a dict element which has further elements, e.g. address but in a Row format
+
+{
+'name':'Sonu',
+'Address':Row(flat=236, society='TrisetTowers, city='Gurgaon'} 
+}
+
+user_df.select("Address.flat").show() 
+or
+user_df.select("Address.*").show()
+
+
+5.Using Pandas Dataframe, pd.Dataframe, it is used when there are some missing field values in data, pd.dataframe converts missing values to null
+*bw While converting Pandas Dataframe to Pyspark Data Frame ---- astype(str) will convert each column  to string type
+-- spark.createDataFrame(pandasDF.astype(str))
+
+In case, we want to provide separate data types for each column
+--from pyspark.sql.types import StructType,StructField, StringType, IntegerType
+
+    mySchema = StructType([ StructField("First Name", StringType(), True)\
+                       ,StructField("Age", IntegerType(), True)])
+
+#Create DataFrame by changing schema
+-- sparkDF2 = spark.createDataFrame(pandasDF,schema=mySchema)
+-- sparkDF2.printSchema()
+-- sparkDF2.show()
+
+***In case of an issue, use Apache Arrow
+spark.conf.set("spark.sql.execution.arrow.enabled","true")
+Rest of the steps are same to Point.53 above
+
+In case of an error using Arrow,
+spark.conf.set("spark.sql.execution.arrow.pyspark.fallback.enabled","true")
+
+TWO WAYS TO DEFINE SCHEMA:
+1)Programmatically using StructType
+ from pyspark.sql.types import *
+  schema = StructType([StructField("author", StringType(), False),
+  StructField("title", StringType(), False),
+  StructField("pages", IntegerType(), False)])
+2)Directly using DDS
+ schema = "author STRING, title STRING, pages INT"
+
+	
+
+COMMON SPARK FUNCTIONS:
+1.SELECT 
+Five ways to use SELECT on a DF - 
+book_df.select(book_df.value)
+book_df.select(book_df["value"])
+book_df.select(col("value"))
+book_df.select(expr("value"))
+book_df.select("value")
+
+***book_df['value'], col("value") returns object of type col
+
+SAVING LIST OF COLS AND USING IN SELECT
+
+cols=[col("id"), date_format("date", yyyyMMdd).cast("int").alias("purchase_date"))]
+books_df.select(cols).show()
+or
+books_df.select(*cols).show()
+
+Select multiple columns
+-logs.select("BroadCastLogID", "LogServiceID", "LogDate")
+-logs.select(*["BroadCastLogID", "LogServiceID", "LogDate"])
+-logs.select(F.col("BroadCastLogID"), F.col("LogServiceID"), F.col("LogDate"))
+-logs.select(*[F.col("BroadCastLogID"), F.col("LogServiceID"), F.col("LogDate")])
+
+Select with alias for DF
+-logs.alias('l').select("l.BroadCastLogID", "l.LogServiceID", "l.LogDate")
+
+Select with selectExpr
+df.selectExpr("BroadCastLogID", "LogServiceID", "LogDate - INTERVAL 2 DAYS")
+*bw if you want to use sql 
+logs.createOrReplaceTempView('log_details')
+spark.sql('''SELECT BroadCastLogID, LogServiceID, LogDate - INTERVAL 2 DAYS FROM log_details ''')
+
+
+WITHCOLUMN - Add new column
+ df.withColumn("new_bonus", coalesce(col("bonus").cast("int"), F.lit(0))).show()
+WITHCOLUMN using expr
+df.withColumn('ratings', expr("""
+	CASE
+	when bonus>500 THEN 'OUTSTANDING'
+	when bonus>200 AND bonus<500 THEN 'EXCEEDS EXPECTATIONS'
+	when bonus BETWEEN 0 AND 200 THEN 'MEETS EXPECTATIONS' 	
+	ELSE 'NOT CONSIDERED'
+	END""")
+
+RENAMING COLUMNS
+1.WithColumnRenamed
+2.alias
+3.toDF - convert multiple columns at once
+frm_columns = ["id", "first_name", "last_name"]
+to_columns = ["user_id", "user_first_name", "user_last_name"]
+
+df.select(frm_columns).toDF(*to_columns)
+
+
+SPARK COL FUNCTIONS - 300 functions
+from pyspark.sql.functions import *
+
+CONCAT - To concatenate two columns
+blogsDF.withColumn("AuthorID", F.concat(F.col("First"), F.col("Last"),F.col("ID"))).select("AuthorID").show()
+
+CONCAT_WS - Concatenate with seperator concat_ws(sep, *cols)
+
+LOWER
+UPPER 
+initcap
+length(col)
+
+SUBSTRING - substring(col, startpos, no. of chars)  **startpos can be -ve to start from the end
+
+SPLIT
+
+EXPLODE
+This functions breaks the ARRAY and MAP type. It creates separate records for each array element. 
+from pyspark.sql.functions import explode
+users_df.withColumn('individual_phone_number', explode('phone_numbers')).drop('phone_numbers').show()
+
+EXPLODE_OUTER
+This function works similar to EXPLODE except it returns a record with null array element if array column is null.
+EXPLODE function will not create record for null array
+LPAD - Pad upto no. of characters if the actual values is missing - lpad(col, no. of positions to check, <char to fill> )
+air.withColumn("flightday", concat("Year", lpad(col("Month"),2,"0"), lpad(col("DayofMonth"),2,"0"))).   \
+filter("""IsDepDelayed=='YES' AND date_format(to_date(flightday, 'yyyyMMdd'),'EEEE')=='Sunday'""").show()
+RPAD
+PAD
+TRIM
+RTRIM
+LTRIM
+
+expr --> 
+
+DATE TIME FUNCTIONS
+current_date()
+current_timestamp()
+to_date
+to_timestamp
+date_add - withColumn("new_date_col", date_add("date_col", 10))
+date_sub
+date_diff - withColumn("new_col_name", date_diff("end_date_col_or_lit","start_date_col_or_lit" ))
+months_between
+add_months
+trunc - (col, 'year')
+date_trunc - Both are used to get the beginning date for month, year, Hour, min - ('year', col)
+unix_timestamp - convert to unix timestamp - unix_timestamp('date_col', 'format of date col')
+Cast int to string before conversion 
+from_unixtime - convert unix time to normal date/time - ('unixtime_col', 'format to be converted in') 
+***unixtime is bigint, it cant be cast to date. it can only be cast to timestamp.
+
+OTHER DATE TIME Functions - year, month, datOfWeek ...etc.
+fireDF.select(F.year("AvailableDtTS")).distinct().show()
+
+air.select("Year","Month","DayOfMonth").describe().show()
++-------+------+------+------------------+
+|summary|  Year| Month|        DayOfMonth|
++-------+------+------+------------------+
+|  count|605659|605659|            605659|
+|   mean|2008.0|   1.0|15.908469947610785|
+| stddev|   0.0|   0.0| 8.994294747375292|
+|    min|  2008|     1|                 1|
+|    max|  2008|     1|                31|
++-------+------+------+------------------+
+
+NULL CONVERSION FUNCTIONS
+coalesce - Convert null to 0
+df.withColumn("new_bonus", coalesce(col("bonus").cast("int"), lit(0)))
+
+Convert null to 0
+df.withColumn("new_bonus", expr("nvl(bonus, 0)"))
+
+Convert blanks to null and then 0
+df.withColumn("new_bonus", expr("nvl(nullif(bonus, ''), 0)"))
+
+Bulk operations on null values
+fillna
+dropna or df.na.drop - df.dropna(how='all'/'any', thresh=2<no. of non-null>, subset=['id', 'name'])
+replace
+
+isnan(col) --> true or false
+if using API style syntax, isnan is to be imported from pyspark.sql.functions
+if using SQL style syntax, isnan isnt required to be imported
+
+3.FILTER - Put filter condition on a column
+
+ air.filter(air.Origin=='SFO').count() or
+ air.filter(air['Origin']=='SFO').count()
+
+air.filter('Origin == "SFO"').count()
+
+Two Ways of setting Filter 
+a.SQL Style
+air.withColumn("flightday", concat("Year", lpad(col("Month"),2,"0"), lpad(col("DayofMonth"),2,"0"))).   \
+filter("""IsDepDelayed=='YES' AND date_format(to_date(flightday, 'yyyyMMdd'),'EEEE')=='Sunday'""").show()
+
+b.API Style
+air.withColumn("flightday", concat("Year", lpad(col("Month"),2,"0"), lpad(col("DayofMonth"),2,"0"))).   \
+filter((col("IsDepDelayed")=='YES') & (date_format(to_date("flightday", "yyyyMMdd"),"EEEE")=="Sunday")).count()
+
+Sample WITHOUT using to_date
+air.withColumn("flightdate", concat("Year", lit("-"),lpad("Month",2, "0"),lit("-"),lpad("DayofMonth",2,"0"))). \
+filter("""IsDepDelayed='YES' AND CANCELLED=0 AND
+        date_format(flightdate, 'EEEE') IN ('Sunday', 'Saturday')""").count()
+
+
+
+3.IN / ISIN
+#SQL Style - if flights origin from 'ORD','DFW','ATL','LAX','SFO'
+air.filter("""Origin IN ('ORD','DFW','ATL','LAX','SFO')""").count()
+
+#API Style - if flights origin from 'ORD','DFW','ATL','LAX','SFO'
+air.filter(air.Origin.isin('ORD','DFW','ATL','LAX','SFO')).count()
+
+
+4.NOT LIKE
+#SQL - empdf.filter("first_name NOT LIKE '%Sco'").show()
+
+#API - empdf.filter(~col('first_name').like('%Sco')).show()
+
+5.NULL
+#SQL - IS NULL, IS NOT NULL
+empdf.filter("first_name != 'Mark' or city iS NULL")
+#API - isNull(), isNotNull()
+empdf.filter(col('first_name') != 'Mark' | col('city').isNull())
+
+BETWEEN
+df.filter(col('date').between('2021-02-15 00:00:00', '2021-03-15 23:59:59'))
+both dates are inclusive 
+df.filter("date between '2021-02-15 00:00:00' AND '2021-03-15 23:59:59'")
+df.filter("amount_paid between '850' and '1000'")
+here amount_paid is float. Spark implicitly converts 850 and 1000 to float while comparing
+
+
+DROP FUNCTION
+df.drop("last_date_tm")
+or 
+df.drop(col("last_date_tm"))
+
+***When dropping multiple columns, col function is not allowed
+-Drop using list - 
+pii_columns['first_name','last_name','email','phone']
+user_non_pii = df.drop(*pii_columns)
+
+-Drop Duplicates
+DISTINCT - df.distinct() - Drops records from all columns where there are duplicates
+DROP_DUPLICATES
+DROPDUPLICATES - df.dropDuplicates(['id','name']) ==> Takes optional list of cols to consider for duplication and drop
+
+
+5.SORT/orderBy  - Sort the DF on a particular column
+blogsDF.sort(F.col("ID"), ascending=False).show()
+-df.sort(df.age.desc())
+-df.sort(df["age"])
+-df.sort("age", ascending=False)
+-df.sort(["age","name"], ascending[0,1])
+from pyspark.sql.functions import asc,desc
+-df.sort(asc("age"))
+-df.sort(desc("age"), "name")
+***In Ascending Sort, null values are top wheras in descending sort, null values are at the bottom
+-Ordering on column with null values - asc_nulls_last() , asc_nulls_first(), desc_nulls_last(), desc_nulls_first()
+orderBy(col('bonus').cast('int').asc_nulls_last())
+
+orderBy can be done on df column or alias column created during the query creation
+orderBy(col("field").desc())
+After groupBy/Rollup -- agg --orderBy 
+orderBy is always the last e.g.
+ - groupBy/rollup -- agg -- filter -- orderBy
+
+COMMON AGGREGATE FUNCTIONS
+from pyspark.sql.functions import
+COUNT
+SUM 
+MIN
+MAX
+AVG
+
+fireDF.select(F.sum('NumAlarms'),F.avg('Delay'),F.min("Delay"), F.max("Delay")).show()
+Total Aggregation - orderdf.select(count("*")).show()
+or		    orderdf.count()	
+
+GROUPBY - Grouped Aggregation
+***groupby creates a dataframe of type pyspark.sql.group.GroupedData 
+- Directly on the columns
+fireDF.select('CallType').groupby('CallType').count().orderBy("count", ascending=False).show()
+--All aggregate functions can be run directly on groupby. It will return cols for all numeric fields only
+--Only one aggregate function is allowed in the direct approach
+--Pass individual col names directly in the aggregate functions to get that col's aggregation only
+fireDF.select('CallType').groupby('CallType').count('call_rcvd')
+
+- Using agg function
+orderdf.groupby('order_status').agg(count('order_status'))
+***Read the key-value style of agg function
+
+JOIN FUNCTIONS
+-Joining syntax:
+df.join(df2, df.name==df2.name, <type of join. default:inner>).select(...)
+***if you give complete condition like df.name==df2.name, the result df has user_id from both dfs.
+
+df.join(df2, 'name', <type of join. default:inner>).select(...)
+***in this 
+
+df.join(df2, ['name', 'age'], <type of join. default:inner>).select(...)
+
+cond=[df.name==df3.name, df.age==df3.age]
+df.join(df3, cond, <type of join. default:inner>).select(...)
+
+users_df.alias('u'). \
+join(course_enrolment_df.alias('ce'), 'user_id').  \
+groupBy('u.user_id').count().   \
+show()
+
+TYPES OF JOINS
+how : str, optional
+        default ``inner``. Must be one of: ``inner``, ``cross``, ``outer``,
+        ``full``, ``fullouter``, ``full_outer``, ``left``, ``leftouter``, ``left_outer``,
+        ``right``, ``rightouter``, ``right_outer``, ``semi``, ``leftsemi``, ``left_semi``,
+        ``anti``, ``leftanti`` and ``left_anti``.
+
+CROSSJOIN
+users_df.crossJoin(course_enrolment_df).show()
+--every record in the left df is joined to every record in the right df - 10(users) * 15(enrolments) = 150 records
+
+users_df.join(course_enrolment_df).show()
+
+users_df.join(course_enrolment_df, how='cross').show()
+
+6.countDistinct - Total distinct values in a column
+ fireDF.select("CallType")
+ .where(F.col("CallType").isNotNull())
+ .agg(F.countDistinct("CallType").alias("DistinctCalls")).show()
+
+7.to_timestamp - Convert a string column containing date to a timestamp column  
+fireDF.select('CallType', 'CallDate', 'WatchDate', 'AvailableDtTm').show(5, False)
++----------------+----------+----------+----------------------+
+|CallType        |CallDate  |WatchDate |AvailableDtTm         |
++----------------+----------+----------+----------------------+
+|Structure Fire  |01/11/2002|01/10/2002|01/11/2002 01:51:44 AM|
+|Medical Incident|01/11/2002|01/10/2002|01/11/2002 03:01:18 AM|
+|Medical Incident|01/11/2002|01/10/2002|01/11/2002 02:39:50 AM|
+|Vehicle Fire    |01/11/2002|01/10/2002|01/11/2002 04:16:46 AM|
+|Alarms          |01/11/2002|01/10/2002|01/11/2002 06:01:58 AM|
++----------------+----------+----------+----------------------+
+
+fireDF = fireDF.withColumn("IncidentDate", F.to_timestamp(F.col("CallDate"), "MM/dd/yyyy")).drop("CallDate") \
+.withColumn("OnWatchDate", F.to_timestamp(F.col("WatchDate"), "MM/dd/yyyy"))   \
+  .drop("WatchDate")    \
+  .withColumn("AvailableDtTS", F.to_timestamp(F.col("AvailableDtTm"), \
+  "MM/dd/yyyy hh:mm:ss a"))  \
+  .drop("AvailableDtTm")
+
+fireDF.select("IncidentDate","OnWatchDate","AvailableDtTS").show(5)
++-------------------+-------------------+-------------------+
+|       IncidentDate|        OnWatchDate|      AvailableDtTS|
++-------------------+-------------------+-------------------+
+|2002-01-11 00:00:00|2002-01-10 00:00:00|2002-01-11 01:51:44|
+|2002-01-11 00:00:00|2002-01-10 00:00:00|2002-01-11 03:01:18|
+|2002-01-11 00:00:00|2002-01-10 00:00:00|2002-01-11 02:39:50|
+|2002-01-11 00:00:00|2002-01-10 00:00:00|2002-01-11 04:16:46|
+|2002-01-11 00:00:00|2002-01-10 00:00:00|2002-01-11 06:01:58|
++-------------------+-------------------+-------------------+
+
+
+
+
+air.select("Year", "Month", "DayofMonth").distinct().count()
+
+6.air.select("Year","Month","DayOfMonth").describe().show()
++-------+------+------+------------------+
+|summary|  Year| Month|        DayOfMonth|
++-------+------+------+------------------+
+|  count|605659|605659|            605659|
+|   mean|2008.0|   1.0|15.908469947610785|
+| stddev|   0.0|   0.0| 8.994294747375292|
+|    min|  2008|     1|                 1|
+|    max|  2008|     1|                31|
++-------+------+------+------------------+
+
+7.air.select("Year","Month","DayOfMonth").summary().show()
++-------+------+------+------------------+
+|summary|  Year| Month|        DayOfMonth|
++-------+------+------+------------------+
+|  count|605659|605659|            605659|
+|   mean|2008.0|   1.0|15.908469947610785|
+| stddev|   0.0|   0.0| 8.994294747375292|
+|    min|  2008|     1|                 1|
+|    25%|  2008|     1|                 8|
+|    50%|  2008|     1|                16|
+|    75%|  2008|     1|                24|
+|    max|  2008|     1|                31|
++-------+------+------+------------------+
+
+8.countDistinct
+a)air.select(countDistinct("Year","Month","DayOfMonth").alias("count"))
+or
+b)air.select("Year","Month","DayOfMonth").distinct().count()
+
+air.select(count(lit(1)).alias("count"))
+
+coalesce() is used to set only one partition
+
+empdf.select(sum(coalesce(col("bonus").cast("int"), lit(0))).alias("sum_bonus")).show()
+
+9.agg function - used to perform various aggregation functions on the group of columns
+air.groupBy(concat("Year", lpad("Month",2, "0"),lpad("DayofMonth",2,"0")).     \
+            alias("flightdate")).   \
+            agg(count(lit(1)).alias("No._of_flights"),
+               sum('DepDelay').alias("Departure_delay"),
+               round(avg('DepDelay'),2).alias("Avg_dep_delay") 
+               ).show()
+
+
+
+10.Create View - createOrReplaceTempView
+-deFldf=spark.read.csv(csv_file, inferSchema=True, header=True)
+-deFldf.createOrReplaceTempView("us_flight_delay_tbl")
+
+spark.sql("""Select Distance, Origin, Dest from us_flight_delay_tbl 
+where Distance > 1000 order by Distance DESC""").show(10)
+
+deFldf.select(F.concat("Year", F.lpad("Month", 2,'0'), F.lpad("DayofMonth",2,'0')).alias("date"),   \
+"ArrDelay", "Distance", "Origin", "Dest") \
+.filter((F.col("Origin")=='SFO') & (F.col("Dest")=='ORD') & (F.col("ArrDelay") > 120)).orderBy(F.col("ArrDelay"), ascending=False).show(10)
+
+READ/WRITE OPERATIONS 
+
+-Read all json files and convert/save them to parquet 
+input_dir='../retail_db_json'
+output_dir='../retail_db_parquet'
+import os
+for file in os.listdir(input_dir):
+    if not(file.endswith('sql') or '.git' in file):
+        df=spark.read.json(input_dir + '/' + file)
+        df.coalesce(1).write.parquet(output_dir + '/' + file)
+***coalesce parameter decides the no. of subfiles, the data is written to
+
+***df.inputFiles() - Display the underline file used in the dataframe
+-Read all csv files and convert/save them to pipe separated files:
+  
+
+10.rollup - similar to groupBy - gives extra count information of each group rolled
+
+12.cube -  Create extra records with alternate nulls for each column
+
+13. when-otherwise is similar to CASE-WHEN to set col values on condition basis
+
+14.Check help on a column
+c=col('X')
+help(c)
+
+SPARK READ/WRITE OPERATIONS
+
+17.To check a file before using - 
+spark.read.text('/public/airtraffic_all/airport-codes').show(truncate=False)
+check the headertype i.e.field names,separator type
+
+18.aircode = spark.read.option('header', True).    \
+option('inferSchema',True).    \
+option('sep','\t').  \
+csv('/public/airtraffic_all/airport-codes')
+
+19.join
+air. \
+join(aircode,        
+air.Origin==aircode.IATA).      \
+groupBy(col("State")).agg(count(lit(1)).alias("flights_count")).orderBy(col("flights_count").desc()).show()
+
+
+20.spark.catalog 
+spark.catalog is used to perform scala kind sql operations over metastore.
+
+21.spark.sql(f"DROP DATABASE IF EXISTS <database> CASCADE")
+
+22.spark.sql(f"CREATE DATABASE DEMO_DB")
+
+23.spark.catalog.listDatabases()
+
+24.spark.catalog.setCurrentDatabase('DEMO_DB')
+
+25.spark.catalog.currentDatabase()
+
+26.dummyDf=spark.createDataFrame([('X', )], schema="dummy STRING")
+
+27.spark.catalog.listTables()
+
+28.df.write.saveAsTable?
+
+29.df.write.saveAsTable("dual", mode='overwrite')
+
+30.spark.read.table("dual").show()
+or 
+spark.sql("select * from dual").show()
+
+31.spark.catalog.createTable(<tableName>, path=None, source=None, schema=df.schema)
+
+32.df.write.insertInto("<table name>")	
+
+***** ALL METASTORE INSTRUCTIONS  ***********
+Metastore can be local filesystem, HDFS, S3
+
+33.Create a database at HDFS or local filesystem
+spark.sql(f"CREATE DATABASE IF NOT EXISTS {user}_airlines")
+
+34.Use this database 
+spark.catalog.setCurrentDatabase(f"{user}_airlines")
+or 
+spark.sql("USE learn_spark_db")
+
+35.Show current database
+spark.catalog.currentDatabase()
+
+36.Use shell commands at Jupyter lab
+%%sh
+
+hdfs dfs -mkdir -p /user/`whoami`/airlines_all
+hdfs dfs -cp -f /public/airlines_all/airport-codes /user/`whoami`/airlines_all
+hdfs dfs -ls /user/`whoami`/airlines_all/airport-codes
+
+37.%%sh
+hdfs dfs -tail /user/`whoami`/airlines_all/airport-codes/airport-codes-na.txt
+
+38.airport_codes_path=f'/user/{user}/airport_all/airport-codes'
+
+39.Create External Table 
+spark.catalog.createExternalTable("airport_codes", path=airport_codes_path,source="csv",
+                                         sep="\t",header="true",inferSchema="true")
+
+if InferSchema doesn't work, in the above command set - schema = spdf.schema, where 
+spdf=spark.read.csv(filePath,schema="City STRING, State STRING, Country STRING, IATA STRING"))
+
+or Create Direct Schema - 
+from pyspark.sql.types import StructField, StructType, IntegerType, StringType, FloatType
+airport_schema=StructType([
+    StructField("City", StringType()),
+    StructField("State", StringType()),
+    StructField("Country", FloatType()),
+    StructField("IATA", StringType()),
+])
+
+40.Create managed table - Three ways
+1)Using Catalog
+spark.catalog.createTable("airport_codes", schema=airport_schema)
+
+2)Using write command on Dataframe
+df.write.saveAsTable("airport_codes")
+
+3)Using spark sql Create Table command 
+spark.sql("CREATE TABLE managed_us_delay_flights_tbl (date STRING, delay INT,  
+  distance INT, origin STRING, destination STRING)") 
+
+???IS the managed table created in Parquet format - because default DataFrameReader format is parquet
+
+
+41.Create unmanaged table - Two ways 
+-Provide Path of the source in both the ways
+1)Using spark.sql Create Table
+spark.sql("""CREATE TABLE us_delay_flights_tbl(date STRING, delay INT, 
+  distance INT, origin STRING, destination STRING) 
+  USING csv OPTIONS (PATH 
+  '/databricks-datasets/learning-spark-v2/flights/departuredelays.csv')""")
+
+2)Using dataframe write option
+flights_df.write
+  .option("path", "/tmp/data/us_flights_delay")
+  .saveAsTable("us_delay_flights_tbl")
+
+42.Create Global Temp views - using Dataframe
+df_sfo = spark.sql("SELECT date, delay, origin, destination FROM 
+  us_delay_flights_tbl WHERE origin = 'SFO'")
+df_sfo.createOrReplaceGlobalTempView("us_origin_airport_SFO_global_tmp_view")
+df_sfo.createOrReplaceTempView("us_origin_airport_SFO_tmp_view")
+
+43.Read from Global Temp view: use global_temp prefix with Temp view:
+spark.sql("""select * from global_temp.us_origin_airport_SFO_global_tmp_view""").show(1, vertical=True)
+
+44.Drop Temp views, only using Catalog:
+spark.catalog.dropGlobalTempView("us_origin_airport_SFO_global_tmp_view")
+spark.catalog.dropTempView("us_origin_airport_JFK_tmp_view")
+
+45.Read parquet files into table
+
+46.
+df.write.format("parquet")
+  .mode("overwrite")
+  .option("compression", "snappy")
+  .save("/tmp/data/parquet/df_parquet")
+
+
+40.spark.catalog.listTables()
+
+41.spark.read.table("airport_codes").show() --- this actually creates DF 
+
+42.spark.sql('DESCRIBE FORMATTED airport_codes').show(100, False)
+
+43.spark.catalog.listColumns('airport_codes')
+
+44.Modes for Table Insertion:
+insertInto - using:  
+1.append(default)
+2.overwrite (set True to replace Existing data, default False)
+
+45.spdf=spark.read.csv(filePath,schema="City STRING, State STRING, Country STRING, IATA STRING"))
+
+or create a dataframe manually using createDataFrame with data
+
+46.Insert Data into Table directly from Dataframe
+spdf.write.insertInto("airport_codes", overwrite=True)
+**If inserting into a partitioned table, make sure to make the partitionBy column as the last column in both - 
+dataframe and Table
+
+47.Create Table using DF
+-- Create DF from file:
+airport_codes_path=f'/user/{user}/airlines_all/airport-codes'
+airport_codes_df = spark.read.csv(airport_codes_path, sep="\t", header=True, inferSchema=True)
+
+--Create Table from DF  - By default it creates Parquet Table
+airport_codes_df.write.saveAsTable(f"{user}_airlines.airport_codes")
+
+48.Read data from table into Dataframe
+airport_codes=spark.read.table("airport_codes")
+
+49.type(airport_codes)
+pyspark.sql.dataframe.Dataframe
+
+50.Write to Partitioned Table
+- Usually spark.catalog.createTable is not used to create Partitioned Tables, due to less documentation ***
+- In order to create Partitioned Table using spark.catalog 
+	-- the directories of data needs to be same as Table Partitions
+
+Step1: Create path Variable 
+orders_path = '/public/retail_db/orders'
+
+Step2: Read the file from orders_path using dataframe and place it into user's location in parquet format with partition 
+        spark.read.csv(orders_path,
+        schema='''order_id INT, order_date DATE,
+                  order_customer_id INT, order_status STRING'''). \
+    withColumn('order_month', date_format('order_date', 'yyyyMM')). \
+    write.partitionBy('order_month').parquet(f'/user/{username}/retail_db/orders_part')
+
+Step3:Check for files at location:
+		hdfs dfs -ls /user/itv001789/retail_db/orders_part
+It will show all files in orders_part with each file on different partition on order_month 
+
+Step4:Read this parquet into dataframe
+-- spark.read.parquet(f'/user/itv001789/retail_db/orders_part/order_month=201308').show()
+It will show four columns, not the partition column
+-- spark.read.parquet(f'/user/itv001789/retail_db/orders_part).show()
+It will show five columns, partition column also.
+
+Step5:Create Table over the user location
+-- spark.catalog.createTable('orders_part', path=f'/user/{username}/retail_db/orders_part', source='parquet')
+
+Step6:Check PArtitions on the Table
+spark.sql("SHOW PARTITIONS order_part").show()
+
+Step7:Set PArtitions on the table
+spark.catalog.recoverPartitions('orders_part')
+
+Step8:Preview table
+spark.read.table('orders_part').groupBy('order_month').count().show()
+
+
+51.Write to PArtitioned Table using saveASTable
+Step1: Set path to the CSV file
+-- orders_path = '/public/retail_db/orders'
+
+Step2:Read data into a dataframe and create a new column for partition table
+-- orders=spark.read.csv(orders_path, schema=""" order_id INT........""").   \
+withColumn('order_month', date_format('order_date','yyyyMM'))
+
+Step3:Write to table
+orders.write.saveAsTable('orders_part', mode='overwrite', partitionBy='order_month')
+
+Step4:Check at the location using - hdfs dfs
+
+
+52.Temp Views - application lifetime only
+Step1:Set public path for the file
+airport_codes_path=f'/public/airlines_all/airport-codes'
+
+Step2:Read data in a dataframe
+airport_codes_df = spark.read.csv(airport_codes_path,
+                                  sep="\t",
+                                  header="true",
+                                  inferSchema="true")
+
+Step3:Create Temp View
+airport_codes_df.createTempView("airport_codes_v")
+
+Step4:Check tables
+spark.catalog.listTables()
+here, view will be shown as isTemporary=True
+
+
+
+ 
+54.Convert Spark DF to Pandas DF
+-- pandasDF2=sparkDF2.select("*").toPandas
+--print(pandasDF2)
+      
+Commonly Used DataFrame Structured Transformations
+Operation Description
+select 			Select one or more columns from an existing set of columns in the
+			DataFrame.A more technical term for select is projection. During the
+			projection process, columns can be transformed and manipulated.
+
+selectExpr 		Similar to select but provide powerful SQL expressions in transforming each column.
+
+filter,where		Both filter and where have the same semantics. where is more relational
+			and similar to the where condition in SQL. They are both used for filtering
+			rows based on the given boolean condition(s).
+
+distinct,dropDuplicates	Remove duplicate rows from the DataFrame
+
+sort,orderBy		Sort the DataFrame by the provided column(s)
+
+limit 			Return a new DataFrame by taking the first “n” rows.
+
+union 			Combine the rows from two DataFrame and return it as a new DataFrame.
+
+withColumn 		Use to add a column or replace an existing column in the DataFrame
+
+withColumnRenamed 	Renames an existing column. If a given column name doesn’t exist in the schema, then it is a no-op.
+
+drop 			Drop one or more columns from DataFrame. The operation does nothing if
+			schema doesn’t contain the given column name(s)
+
+sample 			Randomly select a set of rows based on the given fraction, an optional seed value, and an optional 				replacement option.
+
+randomSplit 		Split the DataFrame into one or more DataFrames based on the given
+			weights. Splits the master dataset into training and test datasets in the
+			machine learning process.
+
+join 			Join two DataFrames. Spark supports many types of joins.
+
+groupBy 		Group the DataFrame by one or more columns. A common pattern is to
+			perform aggregation after the groupBy. 
+
+
+
+
+56.logs = logs.select(*[x for x in logs.columns if x not in ["BroadcastLogID", "SequenceNO"]])
+
+57.Rename all columns in one go:
+logs.toDF(*[x.lower() for x in logs.columns]).printSchema()
+
+58.Sort using column names
+logs.select(sorted(logs.columns)).printSchema()
+
+59.logswithoutID = logs.select(*[x for x in logs.columns if not x.endswith('ID')])
+
+
+UDF
+dc=spark.udf.register('date_convert', lambda d: int(d[:10].replace('-','')))
+
+df.withColumn("date", dc(order_date))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

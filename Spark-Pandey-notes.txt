@@ -1,0 +1,70 @@
+1.Spark Execution Modes
+Cluster Mode		Execution Mode		Execution Tools		
+Local			Client			IDE, Notebook, Shell		Local Interactive Development
+YARN			Client			Notebook, Shell			Local Interactive Development
+YARN			Cluster			Spark-Submit			Batch Processing
+
+At local machine, while configuring spark application from Sparksession
+local[n], if n > 1 then 1 thread simulates driver and n - 1 simulate executor nodes 
+
+2.Spark Shell from cmdline- 
+Run pyspark with various options:
+--master local[3]    =>cluster manager - 3 threads
+--driver-memory 2G  =>
+
+Zepplin notebook by default runs Scala cells. To run pyspark cells, 
+enter %pyspark with each cell
+
+3.Spark UI - localhost:4040/ or the server ip with port no.
+
+4.pyspark --master yarn --driver-memory 1G --executor-memory 500M --num-executors 3
+
+5.spark-submit --master yarn --deploy-mode cluster pi.py
+
+6.Where does cluster manager saves logs
+spark.yarn.app.container.log.dir
+
+7.log4j is the main lib used for logging in Spark
+-Create log4j configuration file and add it in your project folder
+-Configure Spark JVM to pickup the log4j configuration file
+-Create a python class to get Spark's log4j instance and use it
+(While creating/practicing the spark application, kindly visit: 
+Spark Programming in Python for Beginners with Apache Spark 3 ScholarNest Chapter 4 Video 2)
+
+8.Spark Actions - Read, Write, Show, Collect
+
+9.difference between collect() and show()
+Collect returns the DF as a python list
+Show prints the dateframe
+
+10.Repartition(n) - Transformation that creates n partitions for the dataframe
+
+11.Add conf - spark.sql.shuffle.partitions=n, to make sure that Transformation functions like groupby cannot create unnecessary partitions
+
+12.UI - localhost:4040/
+
+13.To execute Avro, include spark-avro package to the Config file - spark.defaults.conf
+spark.jars.packages - org.apache:spark-avro_2.12:3.2.1
+./bin/spark-submit --packages org.apache.spark:spark-avro_2.12:3.2.1
+
+14.Unmanaged/External tables are used for reusing the data
+
+15.Managed/Unmanaged Tables over Hivestore are required to process them using JDBC/ODBC connections used by Analytics apps. While saving them just as Parquet /Avro file will not be helpful in analysing them
+
+16.partitionBy 
+bucketBy - based on SQL's PARTITION BY HASH
+
+17.Scenarios for using Row based approach on df:
+1.Manually creating rows in df
+2.Collecting df rows to driver
+3.Work with individual row
+
+One Action IS one Job HAS One/Multiple Stages HAS One/Multiple Tasks 
+
+Each Wide Transformation causes separate stage.
+Each wide transformation writes data to Exchange
+
+ 
+
+
+

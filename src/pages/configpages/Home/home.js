@@ -1,11 +1,12 @@
 import React from "react";
-import { MDBRow } from "mdbreact";
+import { MDBContainer, MDBRow } from "mdbreact";
 import { AppContext } from "../../../AppProvider";
 import Card from "../../../utilities/Card";
 
 import PageTitle from "../../../utilities/PageTitle";
 import NoHomeForUser from "./NoHomeForUser";
 import { CONTEXT } from "../../../config";
+import Crumb from "../../../utilities/CardBreadcrumbs";
 
 const icons = [
   require("../../../assets/homeIcon/price.svg"),
@@ -84,26 +85,37 @@ const Home = (props) => {
             {navigationType==="Sidebar" && <PageTitle
               title={homePage.length > 0 ? homePage[0].displayName : "Home"}
             />}
-            <MDBRow center>
+            <MDBContainer>
               {homePage.length > 0 && homePage[0].children ? (
                 homePage[0].children.length > 0 ? (
                   homePage[0].children.map((item, index) => {
                     const icon = icons[Math.floor(Math.random() * 6)];
-                    return (
-                      <Card
+                    {
+                    return  homePage[0].displayName === "Model Hub"?
+                    (
+                      <Crumb
                         key={index}
                         icon={icon}
                         onClick={() => {
                           setTab(setSiderKey, [item.menuKey]);
-                        
-                          
-                          
                         }}
                         title={item.displayName}
                         navLinkTo={CONTEXT + item.link}
                        
                       />
-                    );
+                    )
+                    :(
+                      <Card
+                        key={index}
+                        icon={icon}
+                        onClick={() => {
+                          setTab(setSiderKey, [item.menuKey]);
+                        }}
+                        title={item.displayName}
+                        navLinkTo={CONTEXT + item.link}
+                       
+                      />
+                    );}
                   })
                 ) : homePage[0].allowHome ? (
                   <NoHomeForUser title={"No Home Page"} />
@@ -113,7 +125,7 @@ const Home = (props) => {
               ) : (
                 <Card icon={icons[1]} title={"No Models"} navLinkTo={"#"} />
               )}
-            </MDBRow>
+            </MDBContainer>
           </React.Fragment>
         );
       }}

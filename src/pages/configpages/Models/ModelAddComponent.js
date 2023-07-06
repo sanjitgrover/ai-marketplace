@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { CONTEXT } from "../../../config";
-import { Select } from "antd";
+import axios from "axios";
+import { Select, Upload, message, Button, Icon } from "antd";
 import {
   MDBRow,
   MDBCol,
@@ -14,6 +15,22 @@ import {
 
 const { Option } = Select;
 const textInput = React.createRef();
+
+const props = {
+  name: 'file',
+  action: 'http://localhost:8000/upload',
+  headers: {"Access-Control-Allow-Origin": "*"  },
+  onChange(info) {
+    if (info.file.status !== 'uploading') {
+      console.log(info.file, info.fileList);
+    }
+    if (info.file.status === 'done') {
+      message.success(`${info.file.name} file uploaded successfully`);
+    } else if (info.file.status === 'error') {
+      message.error(`${info.file.name} file upload failed.`);
+    }
+  },
+};
 
 export default class extends Component {
   constructor(props) {
@@ -75,6 +92,19 @@ export default class extends Component {
         bank: currentModel ? currentModel.bank : "",
       });
     }
+  }
+
+  sendModelParams=()=>{
+    axios({
+      method: "post",
+      url: 'http://localhost:8000/modelparams' ,
+      data: {
+        modellist: [{"preg":'(float, 0.0)'}, {"ref":'(float, 0.0)'}]
+      },
+      responseType: "json",
+    }).then((res) => {
+      console.log(res);
+    })
   }
 
   changeHandler = (event, fieldName = null) => {
@@ -179,13 +209,24 @@ export default class extends Component {
                           );
                         })}
                       </Select>
+                      <Upload {...props}>     
                       <input
                         type="button"
                         value="+"
                         title="Add new item"
-                        className="form-control w-25 ml-2 h-auto p-0"
-                        onClick={this.handleAddListItem}
+                        className="form-control ml-2 h-auto"
+                        // onClick={this.handleAddListItem}
                       />
+                      </Upload>
+                      
+                      <input
+                        type="button"
+                        value="+++++"
+                        title="Add new item"
+                        className="form-control ml-2 h-auto"
+                        onClick={this.sendModelParams}
+                      />
+
                     </div>
                   </div>
                   {this.state.addListInput ? (

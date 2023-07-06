@@ -56,15 +56,16 @@ const ModelReviews = (props) => {
         return <div key={insightsId} className="mb-3" style={{backgroundColor: "#fafafa"}}>
                 <div className="pt-4">
                     <div className="d-flex justify-content-between user-details">
-                        <h5 className="font-weight-bold text-capitalize">{createdBy}</h5>
+                       
                         <p className='text-muted'>{new Date(createdDate).getDate() + '/' + (new Date(createdDate).getMonth() + 1) + '/' + new Date(createdDate).getFullYear()}</p>
                     </div>
                     <p className="pr-5" style={{whiteSpace: "pre-wrap"}}>{insightsValue}</p>
                 </div>
                 <div className="d-flex justify-content-between align-items-center pb-2 border-bottom">
+                    <h6 className="font-weight-bold text-capitalize">{createdBy}</h6>
                         <Rate allowHalf style={{color: "blue"}} disabled defaultValue={rating} />
                     {
-                    // props.user.userMail === email && 
+                    createdBy === "Sumit Asthana" ?
                     <div>
                         <Button size="small" variant="outlined" className="text-primary-blue px-3 py-1 mr-2"
                             onClick={() => setEdit(insightsId)}>
@@ -75,7 +76,9 @@ const ModelReviews = (props) => {
                             >
                             Delete
                         </Button>
-                    </div>}
+                    </div>
+                    :<div style={{width:"9rem"}}></div>     
+                }
                    
                 </div>
             </div>
